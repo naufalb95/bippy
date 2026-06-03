@@ -37,14 +37,14 @@ export function useBarcodeScan(onScanned: () => void) {
     [onScanned],
   );
 
-  useEffect(() => {
-    if (!scan) return;
-    const t = setTimeout(() => {
-      setScan(null);
-      lockedRef.current = false;
-    }, RESULT_AUTO_DISMISS_MS);
-    return () => clearTimeout(t);
-  }, [scan]);
+  // useEffect(() => {
+  //   if (!scan) return;
+  //   const t = setTimeout(() => {
+  //     setScan(null);
+  //     lockedRef.current = false;
+  //   }, RESULT_AUTO_DISMISS_MS);
+  //   return () => clearTimeout(t);
+  // }, [scan]);
 
   const reset = useCallback(() => {
     setScan(null);

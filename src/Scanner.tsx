@@ -9,14 +9,17 @@ import { useTapFocus } from './hooks/useTapFocus';
 import { useBarcodeScan } from './hooks/useBarcodeScan';
 import { FocusRing } from './components/FocusRing';
 import { ResultCard } from './components/ResultCard';
+import { Flashcard } from './components/Flashcard';
 import { PermissionGate } from './components/PermissionGate';
 import { Footer, Header, Reticle } from './components/ScannerChrome';
+import { getFlashcard } from './flashcards';
 
 export function Scanner() {
   const [permission, requestPermission] = useCameraPermissions();
   const playBeep = useScannerBeep();
   const { autofocus, focusPoint, focusAnim, handleTap } = useTapFocus();
   const { scan, handleBarcode, reset } = useBarcodeScan(playBeep);
+  const flashcard = scan ? getFlashcard(scan.data) : null;
 
   if (!permission) return <View style={styles.root} />;
   if (!permission.granted) {
@@ -43,11 +46,19 @@ export function Scanner() {
 
       {focusPoint && <FocusRing point={focusPoint} anim={focusAnim} />}
 
-      <SafeAreaView style={styles.overlay} pointerEvents="box-none">
-        <Header />
-        <Reticle />
-        {scan ? <ResultCard scan={scan} onDismiss={reset} /> : <Footer />}
-      </SafeAreaView>
+      {!flashcard && (
+        <SafeAreaView style={styles.overlay} pointerEvents="box-none">
+          <Header />
+          <Reticle />
+          {scan ? (
+            <ResultCard scan={scan} onDismiss={reset} />
+          ) : (
+            <Footer />
+          )}
+        </SafeAreaView>
+      )}
+
+      {flashcard && <Flashcard card={flashcard} onDismiss={reset} />}
 
       <StatusBar style="light" />
     </View>

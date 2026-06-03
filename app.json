@@ -13,7 +13,9 @@
       }
     },
     "android": {
-      "permissions": ["android.permission.CAMERA"],
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#FFC93C",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -31,7 +33,8 @@
           "cameraPermission": "Allow Bippy! to access your camera to scan codes."
         }
       ],
-      "expo-audio"
+      "expo-audio",
+      "expo-video"
     ]
   }
 }
