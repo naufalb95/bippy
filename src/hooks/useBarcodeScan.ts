@@ -13,9 +13,15 @@ export function useBarcodeScan(onScanned: () => void) {
     data: null,
     at: 0,
   });
+  // Locked while a result card is on screen. Using a ref (not state) so we
+  // never detach `onBarcodeScanned` from CameraView — detaching causes the
+  // native scanner pipeline to tear down and re-init, freezing the preview.
+  const lockedRef = useRef(false);
 
   const handleBarcode = useCallback(
     ({ data, type }: BarcodeScanningResult) => {
+      if (lockedRef.current) return;
+
       const now = Date.now();
       if (
         lastRef.current.data === data &&
@@ -24,6 +30,7 @@ export function useBarcodeScan(onScanned: () => void) {
         return;
       }
       lastRef.current = { data, at: now };
+      lockedRef.current = true;
       onScanned();
       setScan({ data, type });
     },
@@ -32,11 +39,17 @@ export function useBarcodeScan(onScanned: () => void) {
 
   useEffect(() => {
     if (!scan) return;
-    const t = setTimeout(() => setScan(null), RESULT_AUTO_DISMISS_MS);
+    const t = setTimeout(() => {
+      setScan(null);
+      lockedRef.current = false;
+    }, RESULT_AUTO_DISMISS_MS);
     return () => clearTimeout(t);
   }, [scan]);
 
-  const reset = useCallback(() => setScan(null), []);
+  const reset = useCallback(() => {
+    setScan(null);
+    lockedRef.current = false;
+  }, []);
 
   return { scan, handleBarcode, reset };
 }

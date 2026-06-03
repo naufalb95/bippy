@@ -32,7 +32,7 @@ export function Scanner() {
         facing="back"
         autofocus={autofocus}
         barcodeScannerSettings={{ barcodeTypes: BARCODE_TYPES }}
-        onBarcodeScanned={scan ? undefined : handleBarcode}
+        onBarcodeScanned={handleBarcode}
       />
 
       <Pressable
