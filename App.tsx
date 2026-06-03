@@ -74,6 +74,13 @@ function Scanner() {
     };
   }, []);
 
+  // Auto-dismiss the result after 5s so scanning resumes hands-free.
+  useEffect(() => {
+    if (!scan) return;
+    const t = setTimeout(() => setScan(null), 3000);
+    return () => clearTimeout(t);
+  }, [scan]);
+
   const handleTapFocus = useCallback(
     (e: GestureResponderEvent) => {
       const { locationX, locationY } = e.nativeEvent;
