@@ -39,11 +39,11 @@ export function useBarcodeScan(onScanned: () => void) {
 
   useEffect(() => {
     if (!scan) return;
-    // const t = setTimeout(() => {
-    //   setScan(null);
-    //   lockedRef.current = false;
-    // }, RESULT_AUTO_DISMISS_MS);
-    // return () => clearTimeout(t);
+    const t = setTimeout(() => {
+      setScan(null);
+      lockedRef.current = false;
+    }, RESULT_AUTO_DISMISS_MS);
+    return () => clearTimeout(t);
   }, [scan]);
 
   const reset = useCallback(() => {
