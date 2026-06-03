@@ -1,5 +1,5 @@
 {
-  "name": "barcode-scanner",
+  "name": "bippy",
   "version": "1.0.0",
   "main": "index.ts",
   "dependencies": {
@@ -19,5 +19,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "sharp": "^0.34.5"
+  }
 }

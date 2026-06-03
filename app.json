@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Barcode Scanner",
-    "slug": "barcode-scanner",
+    "name": "Bippy!",
+    "slug": "bippy",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -15,7 +15,7 @@
     "android": {
       "permissions": ["android.permission.CAMERA"],
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#FFC93C",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -28,7 +28,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow Barcode Scanner to access your camera to scan codes."
+          "cameraPermission": "Allow Bippy! to access your camera to scan codes."
         }
       ],
       "expo-audio"
