@@ -14,9 +14,10 @@ export function Flashcard({ card, onDismiss }: Props) {
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       <BlurView
         style={StyleSheet.absoluteFill}
-        intensity={90}
+        intensity={100}
         tint="dark"
       />
+      <View style={[StyleSheet.absoluteFill, styles.scrim]} />
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.content}>
           <Text style={styles.name}>{card.name}</Text>
@@ -58,6 +59,9 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     paddingHorizontal: 24,
+  },
+  scrim: {
+    backgroundColor: 'rgba(0,0,0,0.1)',
   },
   content: {
     flex: 1,
