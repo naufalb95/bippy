@@ -16,15 +16,33 @@ There is **no test suite, no linter, no formatter** configured. Don't invent com
 
 ## Architecture
 
-This is a single-screen Expo app. The entire UI and logic lives in `App.tsx` — there is no `src/` directory, no routing library, and no state management library. **Resist the temptation to "structure" it** unless adding multiple genuinely distinct screens; the small surface area is intentional.
+Single-screen Expo app. `App.tsx` is a thin `SafeAreaProvider` wrapper; everything else lives under `src/`:
 
-### Three non-obvious things about `App.tsx`
+```
+App.tsx                       SafeAreaProvider + <Scanner />
+src/
+  Scanner.tsx                 composes hooks + components, owns layering
+  constants.ts                BARCODE_TYPES + timing constants
+  hooks/
+    useScannerBeep.ts         audio player + silent-mode setup, returns play()
+    useTapFocus.ts            autofocus toggle + focus-ring animation
+    useBarcodeScan.ts         scan state, same-code debounce, auto-dismiss
+  components/
+    FocusRing.tsx             animated green ring at tap point
+    ResultCard.tsx            post-scan card with "Scan again" button
+    PermissionGate.tsx        "Allow camera" screen
+    ScannerChrome.tsx         Header / Reticle / Footer (small chrome bits)
+```
 
-1. **CameraView's autofocus is global, not per-point.** `expo-camera` doesn't expose a "focus at coordinate" API. The tap-to-focus implementation works by toggling the `autofocus` prop `'off'` → `'on'` → back to `'off'` after ~80 ms, which forces the camera to re-run its focus routine. The green focus ring is purely visual feedback; the camera does not actually focus at that point. Don't "fix" this by trying to pass coordinates to CameraView — they're not supported. If real point-of-interest focus is ever needed, the path is `react-native-vision-camera`, which means leaving Expo Go.
+Styles are co-located per component — there is no shared `styles.ts`. No routing, no state library; if you find yourself reaching for one, push back first.
 
-2. **Layering order is load-bearing.** From back to front: `CameraView` (absoluteFill) → full-screen `Pressable` (tap-to-focus catcher) → focus-ring `Animated.View` (`pointerEvents="none"`) → `SafeAreaView` overlay (`pointerEvents="box-none"`). The `box-none` is what lets taps on empty overlay regions fall through to the Pressable below, while still letting the "Scan again" button receive its own taps. Reordering these or changing `pointerEvents` will silently break either tap-to-focus or the button.
+### Three non-obvious things
 
-3. **Audio mode must be set to `playsInSilentMode: true`.** Without this, the beep is silent when the phone is in silent/vibrate mode — defeating the whole "satisfying cashier beep" point of the app. The call lives in a `useEffect` at app start; don't remove it.
+1. **CameraView's autofocus is global, not per-point.** `expo-camera` doesn't expose a "focus at coordinate" API. `useTapFocus` works by toggling the `autofocus` prop `'off'` → `'on'` → back to `'off'` after ~80 ms (see `REFOCUS_TOGGLE_MS`), forcing the camera to re-run its focus routine. The green `FocusRing` is purely visual feedback; the camera does not actually focus at that point. Don't "fix" this by trying to pass coordinates to CameraView — they're not supported. If real point-of-interest focus is ever needed, the path is `react-native-vision-camera`, which means leaving Expo Go.
+
+2. **Layering order in `Scanner.tsx` is load-bearing.** From back to front: `CameraView` (absoluteFill) → full-screen `Pressable` (tap-to-focus catcher) → `FocusRing` (`pointerEvents="none"`) → `SafeAreaView` overlay (`pointerEvents="box-none"`). The `box-none` is what lets taps on empty overlay regions fall through to the Pressable below, while still letting the "Scan again" button receive its own taps. Reordering these or changing `pointerEvents` will silently break either tap-to-focus or the button.
+
+3. **Audio mode must be set to `playsInSilentMode: true`.** Without this, the beep is silent when the phone is in silent/vibrate mode — defeating the whole "satisfying cashier beep" point of the app. The call lives inside `useScannerBeep`'s `useEffect`; don't remove it.
 
 ### Asset pipeline
 
