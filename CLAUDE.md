@@ -23,13 +23,13 @@ App.tsx                       SafeAreaProvider + <Scanner />
 src/
   Scanner.tsx                 composes hooks + components, owns layering
   constants.ts                BARCODE_TYPES + timing constants
+  flashcards.ts               typed deck keyed by UUID + getFlashcard() lookup
   hooks/
     useScannerBeep.ts         audio player + silent-mode setup, returns play()
-    useTapFocus.ts            autofocus toggle + focus-ring animation
-    useBarcodeScan.ts         scan state, same-code debounce, auto-dismiss
+    useBarcodeScan.ts         scan state, lock ref, same-code debounce
   components/
-    FocusRing.tsx             animated green ring at tap point
-    ResultCard.tsx            post-scan card with "Scan again" button
+    Flashcard.tsx             full-screen blurred-backdrop card with looping video
+    ResultCard.tsx            generic post-scan card for unrecognised codes
     PermissionGate.tsx        "Allow camera" screen
     ScannerChrome.tsx         Header / Reticle / Footer (small chrome bits)
 ```
@@ -38,11 +38,15 @@ Styles are co-located per component — there is no shared `styles.ts`. No routi
 
 ### Three non-obvious things
 
-1. **CameraView's autofocus is global, not per-point.** `expo-camera` doesn't expose a "focus at coordinate" API. `useTapFocus` works by toggling the `autofocus` prop `'off'` → `'on'` → back to `'off'` after ~80 ms (see `REFOCUS_TOGGLE_MS`), forcing the camera to re-run its focus routine. The green `FocusRing` is purely visual feedback; the camera does not actually focus at that point. Don't "fix" this by trying to pass coordinates to CameraView — they're not supported. If real point-of-interest focus is ever needed, the path is `react-native-vision-camera`, which means leaving Expo Go.
+1. **There is no tap-to-focus, and don't try to add one.** `expo-camera` only exposes a global `autofocus` mode (`'off'` = continuous autofocus, `'on'` = focus once then lock) with no "refocus now" trigger or point-of-interest API. The earlier toggle-the-prop workaround (`'off'` → `'on'` for ~80 ms → `'off'`) didn't actually trigger a refocus reliably in practice and was removed. The default continuous autofocus handles real-world scanning fine. If real point-of-interest focus is ever needed, the path is `react-native-vision-camera`, which means leaving Expo Go.
 
-2. **Layering order in `Scanner.tsx` is load-bearing.** From back to front: `CameraView` (absoluteFill) → full-screen `Pressable` (tap-to-focus catcher) → `FocusRing` (`pointerEvents="none"`) → `SafeAreaView` overlay (`pointerEvents="box-none"`). The `box-none` is what lets taps on empty overlay regions fall through to the Pressable below, while still letting the "Scan again" button receive its own taps. Reordering these or changing `pointerEvents` will silently break either tap-to-focus or the button.
+2. **`onBarcodeScanned` must stay attached to CameraView.** Setting it to `undefined` (e.g. while a result card is shown) makes CameraView tear down and re-init the native scanning pipeline, freezing the preview for ~1 s on both transitions. `useBarcodeScan` instead gates scans through a `lockedRef` so the handler stays attached for the camera's whole lifetime while still ignoring new codes while a result is on screen.
 
 3. **Audio mode must be set to `playsInSilentMode: true`.** Without this, the beep is silent when the phone is in silent/vibrate mode — defeating the whole "satisfying cashier beep" point of the app. The call lives inside `useScannerBeep`'s `useEffect`; don't remove it.
+
+### Flashcard flow
+
+A QR encoding `bippy:<uuidv4>` is looked up in `src/flashcards.ts` and, on hit, takes over the screen with a `Flashcard` component (heavy blur over the live camera, big name, looping video). Unknown UUIDs fall through to the generic `ResultCard`. Cards may omit the `video` field — the UI shows a "Video coming soon!" placeholder so a card can exist before its media is added. Video files live in `assets/flashcards/videos/` and are referenced via `require()`.
 
 ### Asset pipeline
 

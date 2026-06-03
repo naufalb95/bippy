@@ -22,7 +22,6 @@ export function Footer() {
       <Text style={styles.footerText}>
         Hold steady — it'll beep when it sees one.
       </Text>
-      <Text style={styles.footerHint}>Tap anywhere to focus</Text>
     </View>
   );
 }
@@ -59,14 +58,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     opacity: 0.85,
-    textShadowColor: 'rgba(0,0,0,0.6)',
-    textShadowRadius: 4,
-  },
-  footerHint: {
-    color: '#fff',
-    fontSize: 12,
-    opacity: 0.65,
-    marginTop: 6,
     textShadowColor: 'rgba(0,0,0,0.6)',
     textShadowRadius: 4,
   },

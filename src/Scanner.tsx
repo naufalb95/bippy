@@ -1,13 +1,11 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 
 import { BARCODE_TYPES } from './constants';
 import { useScannerBeep } from './hooks/useScannerBeep';
-import { useTapFocus } from './hooks/useTapFocus';
 import { useBarcodeScan } from './hooks/useBarcodeScan';
-import { FocusRing } from './components/FocusRing';
 import { ResultCard } from './components/ResultCard';
 import { Flashcard } from './components/Flashcard';
 import { PermissionGate } from './components/PermissionGate';
@@ -17,7 +15,6 @@ import { getFlashcard } from './flashcards';
 export function Scanner() {
   const [permission, requestPermission] = useCameraPermissions();
   const playBeep = useScannerBeep();
-  const { autofocus, focusPoint, focusAnim, handleTap } = useTapFocus();
   const { scan, handleBarcode, reset } = useBarcodeScan(playBeep);
   const flashcard = scan ? getFlashcard(scan.data) : null;
 
@@ -26,25 +23,14 @@ export function Scanner() {
     return <PermissionGate onRequest={requestPermission} />;
   }
 
-  // Layering is load-bearing — see CLAUDE.md. Back→front:
-  // CameraView → tap-catcher Pressable → FocusRing (none) → overlay (box-none).
   return (
     <View style={styles.root}>
       <CameraView
         style={StyleSheet.absoluteFill}
         facing="back"
-        autofocus={autofocus}
         barcodeScannerSettings={{ barcodeTypes: BARCODE_TYPES }}
         onBarcodeScanned={handleBarcode}
       />
-
-      <Pressable
-        style={StyleSheet.absoluteFill}
-        onPress={handleTap}
-        android_disableSound
-      />
-
-      {focusPoint && <FocusRing point={focusPoint} anim={focusAnim} />}
 
       {!flashcard && (
         <SafeAreaView style={styles.overlay} pointerEvents="box-none">
