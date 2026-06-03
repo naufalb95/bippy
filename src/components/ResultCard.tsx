@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Scan } from '../hooks/useBarcodeScan';
+import { CodeVisual } from './CodeVisual';
 
 type Props = {
   scan: Scan;
@@ -10,6 +11,7 @@ export function ResultCard({ scan, onDismiss }: Props) {
   return (
     <View style={styles.card}>
       <Text style={styles.label}>{formatType(scan.type)}</Text>
+      <CodeVisual data={scan.data} type={scan.type} />
       <Text style={styles.text} numberOfLines={4} adjustsFontSizeToFit>
         {scan.data}
       </Text>
@@ -31,25 +33,27 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 18,
     backgroundColor: 'rgba(16,18,24,0.92)',
-    gap: 12,
+    gap: 14,
+    alignItems: 'center',
   },
   label: {
     color: '#7ee787',
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 1,
+    textAlign: 'center',
   },
   text: {
     color: '#fff',
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: '700',
+    textAlign: 'center',
   },
   button: {
     backgroundColor: '#3478f6',
     paddingHorizontal: 22,
     paddingVertical: 12,
     borderRadius: 12,
-    alignSelf: 'flex-start',
   },
   buttonText: {
     color: '#fff',
