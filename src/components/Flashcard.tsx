@@ -1,9 +1,16 @@
 import { useEffect } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import type { Flashcard as FlashcardType } from '../flashcards';
+import { useCachedVideoSource } from '../hooks/useCachedVideoSource';
 import { COLORS } from '../theme';
 
 type Props = {
@@ -17,11 +24,9 @@ export function Flashcard({ card, onDismiss }: Props) {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.videoArea}>
           {card.video !== undefined ? (
-            <VideoBlock source={card.video} />
+            <VideoArea source={card.video} />
           ) : (
-            <View style={styles.placeholder}>
-              <Text style={styles.placeholderText}>Video coming soon!</Text>
-            </View>
+            <PlaceholderPanel text="Video coming soon!" />
           )}
         </View>
         <View style={styles.bottomSection}>
@@ -32,6 +37,40 @@ export function Flashcard({ card, onDismiss }: Props) {
         </View>
       </SafeAreaView>
       <StatusBar style="dark" />
+    </View>
+  );
+}
+
+function VideoArea({ source }: { source: number | string }) {
+  const state = useCachedVideoSource(source);
+
+  if (state.status === 'loading') {
+    return (
+      <PlaceholderPanel>
+        <ActivityIndicator size="large" color={COLORS.brandDeep} />
+        <Text style={styles.loadingText}>Loading…</Text>
+      </PlaceholderPanel>
+    );
+  }
+
+  if (state.status === 'error') {
+    return <PlaceholderPanel text="Couldn't load the video." />;
+  }
+
+  return <VideoBlock source={state.source} />;
+}
+
+function PlaceholderPanel({
+  text,
+  children,
+}: {
+  text?: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <View style={styles.placeholder}>
+      {children}
+      {text && <Text style={styles.placeholderText}>{text}</Text>}
     </View>
   );
 }
@@ -103,11 +142,17 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.placeholderBg,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 12,
   },
   placeholderText: {
     color: COLORS.textOnLightSoft,
     fontSize: 18,
     fontStyle: 'italic',
+  },
+  loadingText: {
+    color: COLORS.textOnLightSoft,
+    fontSize: 16,
+    fontWeight: '600',
   },
   video: {
     flex: 1,

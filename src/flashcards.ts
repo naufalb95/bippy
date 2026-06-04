@@ -24,6 +24,16 @@ export const FLASHCARDS: Record<string, Flashcard> = {
     name: 'Elephant',
     video: 'https://fyikd8msqiqe4fyf.public.blob.vercel-storage.com/elephant.mp4',
   },
+  'aac02be3-1533-4e7c-9861-14e45ac37f7e': {
+    id: 'aac02be3-1533-4e7c-9861-14e45ac37f7e',
+    name: 'Giraffe',
+    video: 'https://fyikd8msqiqe4fyf.public.blob.vercel-storage.com/giraffe.mp4',
+  },
+  '5c817e0b-83aa-4d72-8d33-a1488e2bfc9f': {
+    id: '5c817e0b-83aa-4d72-8d33-a1488e2bfc9f',
+    name: 'Cat',
+    video: 'https://fyikd8msqiqe4fyf.public.blob.vercel-storage.com/cat.mp4',
+  },
 };
 
 const QR_PREFIX = 'bippy:';
