@@ -1,20 +1,30 @@
 // Generates the Bippy! app icon set into assets/.
-// Design: rounded sunshine-yellow square, centered barcode in indigo,
-// a hot-pink scan line cutting across, and a tiny white sparkle that
-// hints "scanned!" — kid-friendly and readable at small sizes.
+// Design: rounded plate with a warm caramel→tan gradient, centered
+// barcode in deep brown, a punchy terracotta scan line tilted for
+// energy, three cream sparkles and two confetti dots (cream + soft
+// yellow) sprinkled around. Reads playful + warm at small sizes.
 const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
 
 const COLORS = {
-  yellow: '#FFC93C',
-  bars: '#1E1B4B',
-  scan: '#FF3B6F',
-  white: '#FFFFFF',
+  bgTop: '#E6CBA8',    // caramel — top of background gradient
+  bgBot: '#C9A27A',    // brand light brown — bottom of background gradient
+  bars: '#3C2E20',     // deep brown — barcode bars
+  scan: '#DC6B4C',     // punchy terracotta — scan line (energetic)
+  sparkle: '#FAF5EE',  // cream — sparkles
+  confettiYellow: '#F2C76C', // soft sunshine — small confetti pop
 };
 
 const ASSETS = path.join(__dirname, '..', 'assets');
 const SIZE = 1024;
+
+function star4(cx, cy, r, fill) {
+  // 4-point sparkle/diamond star.
+  return `<path transform="translate(${cx} ${cy})"
+    d="M 0 -${r} Q ${r * 0.18} -${r * 0.18} ${r} 0 Q ${r * 0.18} ${r * 0.18} 0 ${r} Q -${r * 0.18} ${r * 0.18} -${r} 0 Q -${r * 0.18} -${r * 0.18} 0 -${r} Z"
+    fill="${fill}" />`;
+}
 
 function symbol(mode /* 'full' | 'monochrome' */) {
   const center = SIZE / 2;
@@ -38,32 +48,46 @@ function symbol(mode /* 'full' | 'monochrome' */) {
     cursor += bw + unit;
   }
 
-  // Scan line — across the bars, a touch below center.
-  const lineH = SIZE * 0.045;
+  // Scan line — tilted a few degrees for a playful "in motion" feel,
+  // extending past the bars on both sides.
+  const lineH = SIZE * 0.05;
   const lineY = barAreaY + barAreaH * 0.6 - lineH / 2;
-  const lineX = barAreaX - SIZE * 0.045;
-  const lineW = barAreaW + SIZE * 0.09;
+  const lineX = barAreaX - SIZE * 0.055;
+  const lineW = barAreaW + SIZE * 0.11;
   const lineFill = mode === 'monochrome' ? '#fff' : COLORS.scan;
-  const scanLine = `<rect x="${lineX}" y="${lineY}" width="${lineW}" height="${lineH}" rx="${lineH / 2}" fill="${lineFill}" />`;
+  const scanLine = `<g transform="rotate(-3 ${center} ${center})"><rect x="${lineX}" y="${lineY}" width="${lineW}" height="${lineH}" rx="${lineH / 2}" fill="${lineFill}" /></g>`;
 
-  // Sparkle (4-point star) — inside safe zone so adaptive crop won't eat it.
-  let sparkle = '';
-  if (mode === 'full') {
-    const cx = SIZE * 0.74;
-    const cy = SIZE * 0.26;
-    const r = SIZE * 0.055;
-    // Diamond-ish star via two crossed quads → one path.
-    sparkle = `<path transform="translate(${cx} ${cy})"
-      d="M 0 -${r} Q ${r * 0.18} -${r * 0.18} ${r} 0 Q ${r * 0.18} ${r * 0.18} 0 ${r} Q -${r * 0.18} ${r * 0.18} -${r} 0 Q -${r * 0.18} -${r * 0.18} 0 -${r} Z"
-      fill="${COLORS.white}" />`;
-  }
+  // Decorative confetti only on the full design — monochrome stays clean.
+  if (mode !== 'full') return bars + scanLine;
 
-  return bars + scanLine + sparkle;
+  // Three sparkles of varying sizes — top-right (large), top-left (small),
+  // bottom-right (small). Inside the safe zone so Android crop won't trim.
+  const sparkles =
+    star4(SIZE * 0.77, SIZE * 0.21, SIZE * 0.065, COLORS.sparkle) +
+    star4(SIZE * 0.20, SIZE * 0.20, SIZE * 0.032, COLORS.sparkle) +
+    star4(SIZE * 0.82, SIZE * 0.78, SIZE * 0.038, COLORS.sparkle);
+
+  // Confetti dots — small splashes of warm accent colors.
+  const dots =
+    `<circle cx="${SIZE * 0.16}" cy="${SIZE * 0.78}" r="${SIZE * 0.022}" fill="${COLORS.confettiYellow}" />` +
+    `<circle cx="${SIZE * 0.30}" cy="${SIZE * 0.84}" r="${SIZE * 0.014}" fill="${COLORS.sparkle}" />` +
+    `<circle cx="${SIZE * 0.70}" cy="${SIZE * 0.86}" r="${SIZE * 0.018}" fill="${COLORS.confettiYellow}" />`;
+
+  return bars + scanLine + sparkles + dots;
+}
+
+function gradientDef() {
+  return `<defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="${COLORS.bgTop}" />
+      <stop offset="100%" stop-color="${COLORS.bgBot}" />
+    </linearGradient>
+  </defs>`;
 }
 
 function svg({ withBackground, mode }) {
   const bg = withBackground
-    ? `<rect width="${SIZE}" height="${SIZE}" rx="${SIZE * 0.22}" fill="${COLORS.yellow}" />`
+    ? gradientDef() + `<rect width="${SIZE}" height="${SIZE}" rx="${SIZE * 0.22}" fill="url(#bg)" />`
     : '';
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}" viewBox="0 0 ${SIZE} ${SIZE}">
     ${bg}
@@ -72,7 +96,9 @@ function svg({ withBackground, mode }) {
 }
 
 function solidBgSVG() {
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}" viewBox="0 0 ${SIZE} ${SIZE}"><rect width="${SIZE}" height="${SIZE}" fill="${COLORS.yellow}" /></svg>`;
+  // Android adaptive plate — solid colour (no gradients allowed by
+  // the adaptive-icon spec), pick the deeper of the two for richness.
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}" viewBox="0 0 ${SIZE} ${SIZE}"><rect width="${SIZE}" height="${SIZE}" fill="${COLORS.bgBot}" /></svg>`;
 }
 
 async function render(svgString, outPath, outSize) {
@@ -87,7 +113,7 @@ async function render(svgString, outPath, outSize) {
   if (!fs.existsSync(ASSETS)) fs.mkdirSync(ASSETS, { recursive: true });
   console.log('Generating Bippy! icons →', ASSETS);
 
-  // iOS / generic app icon — full design with rounded yellow bg.
+  // iOS / generic app icon — full design with rounded gradient bg.
   await render(svg({ withBackground: true, mode: 'full' }), path.join(ASSETS, 'icon.png'), 1024);
 
   // Splash icon — same design works (Expo centers it on the splash screen).
