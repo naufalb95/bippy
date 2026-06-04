@@ -39,7 +39,7 @@ export function Flashcard({ card, onDismiss }: Props) {
   );
 }
 
-function VideoBlock({ source }: { source: number }) {
+function VideoBlock({ source }: { source: number | string }) {
   const player = useVideoPlayer(source, (p) => {
     p.loop = true;
     p.muted = false;

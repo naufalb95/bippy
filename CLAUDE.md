@@ -46,7 +46,21 @@ Styles are co-located per component — there is no shared `styles.ts`. No routi
 
 ### Flashcard flow
 
-A QR encoding `bippy:<uuidv4>` is looked up in `src/flashcards.ts` and, on hit, takes over the screen with a `Flashcard` component (heavy blur over the live camera, big name, looping video). Unknown UUIDs fall through to the generic `ResultCard`. Cards may omit the `video` field — the UI shows a "Video coming soon!" placeholder so a card can exist before its media is added. Video files live in `assets/flashcards/videos/` and are referenced via `require()`.
+A QR encoding `bippy:<uuidv4>` is looked up in `src/flashcards.ts` and, on hit, takes over the screen with a `Flashcard` component (heavy blur over the live camera, big name, looping video). Unknown UUIDs fall through to the generic `ResultCard`. Cards may omit the `video` field — the UI shows a "Video coming soon!" placeholder so a card can exist before its media is added.
+
+The `video` field accepts either a bundled `require()` (number) or a remote URL (string). Remote URLs are typically public Vercel Blob URLs produced by `scripts/upload-flashcard.js`. Bundled is fine for development; remote is the path forward as the deck grows.
+
+### Vercel Blob and the secret-token rule
+
+`BLOB_READ_WRITE_TOKEN` lives only in `.env.local` (gitignored). `.env` is the committed template with empty values. **Never import `@vercel/blob` from anything under `src/`, `App.tsx`, or `index.ts`** — the SDK is for the Node upload script only. The token grants read+write to the bucket; bundling it (even via `EXPO_PUBLIC_*`) would let anyone with the IPA delete or overwrite the deck.
+
+The app only ever sees the public URLs the upload script returns. To add a new card video:
+
+```sh
+npm run upload-flashcard ./path/to/video.mp4 --name "Giraffe"
+```
+
+The script prints a ready-to-paste `FLASHCARDS` entry with the URL.
 
 ### Asset pipeline
 

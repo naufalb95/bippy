@@ -10,10 +10,12 @@
 export type Flashcard = {
   id: string;
   name: string;
-  // `require()` result for a bundled video. Optional so a card can
-  // exist before the media is added — the UI shows a friendly
-  // "Video coming soon!" placeholder until then.
-  video?: number;
+  // Video source. Either a bundled `require()` (returns a number) or a
+  // remote URL string — typically a public Vercel Blob URL produced by
+  // scripts/upload-flashcard.js. Optional so a card can exist before
+  // the media is added; the UI shows a "Video coming soon!" placeholder
+  // until then.
+  video?: number | string;
 };
 
 export const FLASHCARDS: Record<string, Flashcard> = {
