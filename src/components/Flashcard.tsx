@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -39,8 +40,24 @@ function VideoBlock({ source }: { source: number | string }) {
   const player = useVideoPlayer(source, (p) => {
     p.loop = true;
     p.muted = false;
-    p.play();
+    // Coexist with the beep player's audio session instead of fighting it.
+    p.audioMixingMode = 'mixWithOthers';
   });
+
+  // Setup-callback play() fires before the source is ready and silently
+  // no-ops. Start playback when the player actually reaches readyToPlay.
+  useEffect(() => {
+    if (player.status === 'readyToPlay') {
+      player.play();
+    }
+    const sub = player.addListener('statusChange', ({ status }) => {
+      if (status === 'readyToPlay') {
+        player.play();
+      }
+    });
+    return () => sub.remove();
+  }, [player]);
+
   return (
     <VideoView
       player={player}
