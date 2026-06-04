@@ -83,18 +83,34 @@ function VideoBlock({ source }: { source: number | string }) {
     p.audioMixingMode = 'mixWithOthers';
   });
 
-  // Setup-callback play() fires before the source is ready and silently
-  // no-ops. Start playback when the player actually reaches readyToPlay.
   useEffect(() => {
+    // Re-assert loop in case the setup-callback value didn't stick
+    // across the initial source load (notably for file:// URIs).
+    player.loop = true;
+
+    // Setup-callback play() fires before the source is ready and silently
+    // no-ops. Start playback when the player actually reaches readyToPlay.
     if (player.status === 'readyToPlay') {
       player.play();
     }
-    const sub = player.addListener('statusChange', ({ status }) => {
+    const statusSub = player.addListener('statusChange', ({ status }) => {
       if (status === 'readyToPlay') {
+        player.loop = true;
         player.play();
       }
     });
-    return () => sub.remove();
+
+    // Manual loop fallback: if the player reaches the end without
+    // looping (a known intermittent for cached file:// sources), restart.
+    const endSub = player.addListener('playToEnd', () => {
+      player.currentTime = 0;
+      player.play();
+    });
+
+    return () => {
+      statusSub.remove();
+      endSub.remove();
+    };
   }, [player]);
 
   return (
