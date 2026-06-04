@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Scan } from '../hooks/useBarcodeScan';
+import { COLORS } from '../theme';
 
 type Props = {
   scan: Scan;
@@ -30,32 +31,32 @@ const styles = StyleSheet.create({
     margin: 16,
     padding: 20,
     borderRadius: 18,
-    backgroundColor: 'rgba(16,18,24,0.92)',
+    backgroundColor: COLORS.surface,
     gap: 14,
     alignItems: 'center',
   },
   label: {
-    color: '#7ee787',
+    color: COLORS.accentLabel,
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 1,
     textAlign: 'center',
   },
   text: {
-    color: '#fff',
+    color: COLORS.textOnDark,
     fontSize: 22,
     fontWeight: '700',
     textAlign: 'center',
   },
   button: {
-    backgroundColor: '#3478f6',
+    backgroundColor: COLORS.brand,
     paddingHorizontal: 22,
     paddingVertical: 12,
     borderRadius: 12,
   },
   buttonText: {
-    color: '#fff',
+    color: COLORS.textOnLight,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });

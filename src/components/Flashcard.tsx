@@ -3,6 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import type { Flashcard as FlashcardType } from '../flashcards';
+import { COLORS } from '../theme';
 
 type Props = {
   card: FlashcardType;
@@ -61,7 +62,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   scrim: {
-    backgroundColor: 'rgba(0,0,0,0.1)',
+    backgroundColor: COLORS.scrim,
   },
   content: {
     flex: 1,
@@ -70,33 +71,32 @@ const styles = StyleSheet.create({
     gap: 28,
   },
   name: {
-    color: '#FFC93C',
+    color: COLORS.brandLight,
     fontSize: 52,
     fontWeight: '800',
     letterSpacing: 0.5,
     textAlign: 'center',
-    textShadowColor: 'rgba(0,0,0,0.4)',
+    textShadowColor: COLORS.shadow,
     textShadowRadius: 6,
   },
   placeholder: {
     width: '90%',
     aspectRatio: 4 / 3,
     borderRadius: 24,
-    backgroundColor: 'rgba(31,29,46,0.7)',
+    backgroundColor: COLORS.surfaceMuted,
     alignItems: 'center',
     justifyContent: 'center',
   },
   placeholderText: {
-    color: '#fff',
+    color: COLORS.textOnDarkSoft,
     fontSize: 18,
     fontStyle: 'italic',
-    opacity: 0.85,
   },
   video: {
     width: '92%',
     aspectRatio: 4 / 3,
     borderRadius: 24,
-    backgroundColor: '#000',
+    backgroundColor: '#1c140e',
     overflow: 'hidden',
   },
   footer: {
@@ -104,13 +104,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   button: {
-    backgroundColor: '#3478f6',
+    backgroundColor: COLORS.brand,
     paddingHorizontal: 32,
     paddingVertical: 16,
     borderRadius: 14,
   },
   buttonText: {
-    color: '#fff',
+    color: COLORS.textOnLight,
     fontSize: 18,
     fontWeight: '700',
   },

@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { COLORS } from '../theme';
 
 export function Header() {
   return (
@@ -33,10 +34,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   headerText: {
-    color: '#fff',
+    color: COLORS.textOnDark,
     fontSize: 18,
     fontWeight: '600',
-    textShadowColor: 'rgba(0,0,0,0.6)',
+    textShadowColor: COLORS.shadow,
     textShadowRadius: 4,
   },
   reticleWrap: {
@@ -48,17 +49,17 @@ const styles = StyleSheet.create({
     height: 260,
     borderRadius: 24,
     borderWidth: 3,
-    borderColor: 'rgba(255,255,255,0.9)',
+    borderColor: COLORS.brand,
   },
   footer: {
     padding: 24,
     alignItems: 'center',
   },
   footerText: {
-    color: '#fff',
+    color: COLORS.textOnDark,
     fontSize: 14,
     opacity: 0.85,
-    textShadowColor: 'rgba(0,0,0,0.6)',
+    textShadowColor: COLORS.shadow,
     textShadowRadius: 4,
   },
 });
