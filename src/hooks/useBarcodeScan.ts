@@ -1,9 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import type { BarcodeScanningResult } from 'expo-camera';
-import {
-  RESULT_AUTO_DISMISS_MS,
-  SAME_CODE_DEBOUNCE_MS,
-} from '../constants';
+import { SAME_CODE_DEBOUNCE_MS } from '../constants';
 
 export type Scan = { data: string; type: string };
 
@@ -36,15 +33,6 @@ export function useBarcodeScan(onScanned: () => void) {
     },
     [onScanned],
   );
-
-  // useEffect(() => {
-  //   if (!scan) return;
-  //   const t = setTimeout(() => {
-  //     setScan(null);
-  //     lockedRef.current = false;
-  //   }, RESULT_AUTO_DISMISS_MS);
-  //   return () => clearTimeout(t);
-  // }, [scan]);
 
   const reset = useCallback(() => {
     setScan(null);
