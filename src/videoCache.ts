@@ -7,15 +7,15 @@
 //     the player has enough data — no "wait for full download".
 //   - Cache misses kick off a background download. Once it finishes,
 //     the next mount of the same URL gets the local file → instant play.
-//   - At most CACHE_MAX entries on disk; oldest evicted.
+//   - At most VIDEO_CACHE_MAX entries on disk; oldest evicted.
 //   - clearCache() wipes the on-disk directory at startup so the cache
 //     is effectively per-session and disk doesn't accumulate.
 //
 // Concurrency: in-flight downloads for a URL are deduped.
 
 import * as FileSystem from 'expo-file-system/legacy';
+import { VIDEO_CACHE_MAX } from './constants';
 
-const CACHE_MAX = 10;
 const CACHE_SUBDIR = 'bippy-video-cache';
 
 type Entry = { url: string; localUri: string };
@@ -93,7 +93,7 @@ function warmCache(url: string): void {
       const target = `${cacheRoot()}${fileNameFor(url)}`;
       const result = await FileSystem.downloadAsync(url, target);
       entries.push({ url, localUri: result.uri });
-      while (entries.length > CACHE_MAX) {
+      while (entries.length > VIDEO_CACHE_MAX) {
         const evicted = entries.shift();
         if (evicted) {
           FileSystem.deleteAsync(evicted.localUri, { idempotent: true }).catch(
