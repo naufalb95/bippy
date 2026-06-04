@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -8,9 +8,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { useVideoPlayer, VideoView } from 'expo-video';
+import {
+  useVideoPlayer,
+  VideoView,
+  type VideoPlayerStatus,
+} from 'expo-video';
 import type { Flashcard as FlashcardType } from '../flashcards';
-import { useCachedVideoSource } from '../hooks/useCachedVideoSource';
+import { resolveVideoSource } from '../videoCache';
 import { COLORS } from '../theme';
 
 type Props = {
@@ -24,9 +28,11 @@ export function Flashcard({ card, onDismiss }: Props) {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.videoArea}>
           {card.video !== undefined ? (
-            <VideoArea source={card.video} />
+            <VideoBlock source={card.video} />
           ) : (
-            <PlaceholderPanel text="Video coming soon!" />
+            <View style={styles.placeholder}>
+              <Text style={styles.placeholderText}>Video coming soon!</Text>
+            </View>
           )}
         </View>
         <View style={styles.bottomSection}>
@@ -41,67 +47,36 @@ export function Flashcard({ card, onDismiss }: Props) {
   );
 }
 
-function VideoArea({ source }: { source: number | string }) {
-  const state = useCachedVideoSource(source);
-
-  if (state.status === 'loading') {
-    return (
-      <PlaceholderPanel>
-        <ActivityIndicator size="large" color={COLORS.brandDeep} />
-        <Text style={styles.loadingText}>Loading…</Text>
-      </PlaceholderPanel>
-    );
-  }
-
-  if (state.status === 'error') {
-    return <PlaceholderPanel text="Couldn't load the video." />;
-  }
-
-  return <VideoBlock source={state.source} />;
-}
-
-function PlaceholderPanel({
-  text,
-  children,
-}: {
-  text?: string;
-  children?: React.ReactNode;
-}) {
-  return (
-    <View style={styles.placeholder}>
-      {children}
-      {text && <Text style={styles.placeholderText}>{text}</Text>}
-    </View>
-  );
-}
-
 function VideoBlock({ source }: { source: number | string }) {
-  const player = useVideoPlayer(source, (p) => {
+  // Stable across renders for the same input — keeps useVideoPlayer from
+  // recreating the player. Hits the cache synchronously: cached URLs
+  // return a local file URI; uncached return the URL itself for
+  // streaming while a background download warms the cache.
+  const resolved = useMemo(() => resolveVideoSource(source), [source]);
+
+  const player = useVideoPlayer(resolved, (p) => {
     p.loop = true;
     p.muted = false;
-    // Coexist with the beep player's audio session instead of fighting it.
     p.audioMixingMode = 'mixWithOthers';
   });
 
-  useEffect(() => {
-    // Re-assert loop in case the setup-callback value didn't stick
-    // across the initial source load (notably for file:// URIs).
-    player.loop = true;
+  const [status, setStatus] = useState<VideoPlayerStatus>(player.status);
 
-    // Setup-callback play() fires before the source is ready and silently
-    // no-ops. Start playback when the player actually reaches readyToPlay.
-    if (player.status === 'readyToPlay') {
-      player.play();
-    }
+  useEffect(() => {
+    player.loop = true;
+    setStatus(player.status);
+    if (player.status === 'readyToPlay') player.play();
+
     const statusSub = player.addListener('statusChange', ({ status }) => {
+      setStatus(status);
       if (status === 'readyToPlay') {
         player.loop = true;
         player.play();
       }
     });
 
-    // Manual loop fallback: if the player reaches the end without
-    // looping (a known intermittent for cached file:// sources), restart.
+    // Manual loop fallback in case the loop flag is dropped for file://
+    // sources (intermittent in this expo-video version).
     const endSub = player.addListener('playToEnd', () => {
       player.currentTime = 0;
       player.play();
@@ -113,13 +88,22 @@ function VideoBlock({ source }: { source: number | string }) {
     };
   }, [player]);
 
+  const showSpinner = status !== 'readyToPlay';
+
   return (
-    <VideoView
-      player={player}
-      style={styles.video}
-      contentFit="cover"
-      nativeControls={false}
-    />
+    <View style={styles.video}>
+      <VideoView
+        player={player}
+        style={StyleSheet.absoluteFill}
+        contentFit="cover"
+        nativeControls={false}
+      />
+      {showSpinner && (
+        <View style={styles.spinnerOverlay}>
+          <ActivityIndicator size="large" color={COLORS.brandLight} />
+        </View>
+      )}
+    </View>
   );
 }
 
@@ -165,16 +149,17 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontStyle: 'italic',
   },
-  loadingText: {
-    color: COLORS.textOnLightSoft,
-    fontSize: 16,
-    fontWeight: '600',
-  },
   video: {
     flex: 1,
     borderRadius: 28,
     backgroundColor: '#1c140e',
     overflow: 'hidden',
+  },
+  spinnerOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(28,20,14,0.35)',
   },
   button: {
     backgroundColor: COLORS.brandDeep,
