@@ -45,7 +45,7 @@ function VideoBlock({ source }: { source: number | string }) {
     <VideoView
       player={player}
       style={styles.video}
-      contentFit="contain"
+      contentFit="cover"
       nativeControls={false}
     />
   );
@@ -53,7 +53,7 @@ function VideoBlock({ source }: { source: number | string }) {
 
 const styles = StyleSheet.create({
   bg: {
-    backgroundColor: COLORS.bgCard,
+    backgroundColor: '#F5EBD9',
   },
   safeArea: {
     flex: 1,
@@ -61,7 +61,8 @@ const styles = StyleSheet.create({
   },
   videoArea: {
     flex: 1,
-    alignItems: 'center',
+    alignSelf: 'stretch',
+    alignItems: 'stretch',
     justifyContent: 'center',
     paddingTop: 12,
     paddingBottom: 12,
@@ -81,7 +82,6 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     flex: 1,
-    aspectRatio: 9 / 16,
     borderRadius: 28,
     backgroundColor: COLORS.placeholderBg,
     alignItems: 'center',
@@ -94,7 +94,6 @@ const styles = StyleSheet.create({
   },
   video: {
     flex: 1,
-    aspectRatio: 9 / 16,
     borderRadius: 28,
     backgroundColor: '#1c140e',
     overflow: 'hidden',
