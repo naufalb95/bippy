@@ -22,9 +22,7 @@ export const FLASHCARDS: Record<string, Flashcard> = {
   '12812dd3-a9a2-4c93-97da-cc8cca0e8cd1': {
     id: '12812dd3-a9a2-4c93-97da-cc8cca0e8cd1',
     name: 'Elephant',
-    // Drop the file at assets/flashcards/videos/elephant.mp4 then
-    // uncomment the next line:
-    video: require('../assets/flashcards/videos/elephant.mp4'),
+    video: 'https://fyikd8msqiqe4fyf.public.blob.vercel-storage.com/elephant.mp4',
   },
 };
 
