@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { BlurView } from 'expo-blur';
+import { StatusBar } from 'expo-status-bar';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import type { Flashcard as FlashcardType } from '../flashcards';
 import { COLORS } from '../theme';
@@ -12,16 +12,9 @@ type Props = {
 
 export function Flashcard({ card, onDismiss }: Props) {
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-      <BlurView
-        style={StyleSheet.absoluteFill}
-        intensity={100}
-        tint="dark"
-      />
-      <View style={[StyleSheet.absoluteFill, styles.scrim]} />
+    <View style={[StyleSheet.absoluteFill, styles.bg]}>
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.content}>
-          <Text style={styles.name}>{card.name}</Text>
+        <View style={styles.videoArea}>
           {card.video !== undefined ? (
             <VideoBlock source={card.video} />
           ) : (
@@ -30,12 +23,14 @@ export function Flashcard({ card, onDismiss }: Props) {
             </View>
           )}
         </View>
-        <View style={styles.footer}>
+        <View style={styles.bottomSection}>
+          <Text style={styles.name}>{card.name}</Text>
           <Pressable style={styles.button} onPress={onDismiss}>
             <Text style={styles.buttonText}>Scan again</Text>
           </Pressable>
         </View>
       </SafeAreaView>
+      <StatusBar style="dark" />
     </View>
   );
 }
@@ -57,60 +52,61 @@ function VideoBlock({ source }: { source: number | string }) {
 }
 
 const styles = StyleSheet.create({
+  bg: {
+    backgroundColor: COLORS.bgCard,
+  },
   safeArea: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
   },
-  scrim: {
-    backgroundColor: COLORS.scrim,
-  },
-  content: {
+  videoArea: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 28,
+    paddingTop: 12,
+    paddingBottom: 12,
+  },
+  bottomSection: {
+    alignItems: 'center',
+    gap: 18,
+    paddingBottom: 12,
+    paddingTop: 8,
   },
   name: {
-    color: COLORS.brandLight,
-    fontSize: 52,
+    color: COLORS.textOnLight,
+    fontSize: 56,
     fontWeight: '800',
     letterSpacing: 0.5,
     textAlign: 'center',
-    textShadowColor: COLORS.shadow,
-    textShadowRadius: 6,
   },
   placeholder: {
-    width: '90%',
-    aspectRatio: 4 / 3,
-    borderRadius: 24,
-    backgroundColor: COLORS.surfaceMuted,
+    flex: 1,
+    aspectRatio: 9 / 16,
+    borderRadius: 28,
+    backgroundColor: COLORS.placeholderBg,
     alignItems: 'center',
     justifyContent: 'center',
   },
   placeholderText: {
-    color: COLORS.textOnDarkSoft,
+    color: COLORS.textOnLightSoft,
     fontSize: 18,
     fontStyle: 'italic',
   },
   video: {
-    width: '92%',
-    aspectRatio: 4 / 3,
-    borderRadius: 24,
+    flex: 1,
+    aspectRatio: 9 / 16,
+    borderRadius: 28,
     backgroundColor: '#1c140e',
     overflow: 'hidden',
   },
-  footer: {
-    paddingBottom: 12,
-    alignItems: 'center',
-  },
   button: {
-    backgroundColor: COLORS.brand,
-    paddingHorizontal: 32,
+    backgroundColor: COLORS.brandDeep,
+    paddingHorizontal: 36,
     paddingVertical: 16,
     borderRadius: 14,
   },
   buttonText: {
-    color: COLORS.textOnLight,
+    color: COLORS.textOnDark,
     fontSize: 18,
     fontWeight: '700',
   },

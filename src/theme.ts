@@ -21,9 +21,11 @@ export const COLORS = {
   textOnDarkSoft: '#D9CBB5',// secondary/muted cream
   accentLabel: '#E8A87C',   // soft terracotta — code-type label, replaces green
 
-  // Text on light (PermissionGate background)
-  bgLight: '#FAF5EE',       // creamy background
-  textOnLight: '#3C2E20',   // deep brown
+  // Text on light (PermissionGate background, full-screen flashcard)
+  bgLight: '#FAF5EE',        // creamy background — PermissionGate
+  bgCard: '#F5EBD9',         // light-brown-almost-white — full-screen flashcard
+  placeholderBg: '#EBDDC2',  // slightly darker beige — flashcard placeholder panel
+  textOnLight: '#3C2E20',    // deep brown
   textOnLightSoft: '#6B5A4A',// brown-grey for body copy
 
   // Shadow tint (warmer than pure black)
