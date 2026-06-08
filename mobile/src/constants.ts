@@ -23,3 +23,9 @@ export const SAME_CODE_DEBOUNCE_MS = 1200;
 // Max number of remote flashcard videos kept in the on-disk LRU cache.
 // Bound disk usage; videos beyond this fall back to re-streaming.
 export const VIDEO_CACHE_MAX = 10;
+
+// Base URL of the deployed admin app, which serves the read-only deck at
+// GET /api/public/deck. Set EXPO_PUBLIC_API_URL in mobile/.env(.local)
+// to your Vercel URL, e.g. https://bippy-admin.vercel.app. Empty means
+// no deck is fetched (every scan falls through to the raw-code card).
+export const API_URL = (process.env.EXPO_PUBLIC_API_URL ?? '').replace(/\/+$/, '');

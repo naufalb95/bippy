@@ -12,13 +12,14 @@ import { ResultCard } from './components/ResultCard';
 import { Flashcard } from './components/Flashcard';
 import { PermissionGate } from './components/PermissionGate';
 import { Footer, Header, Reticle } from './components/ScannerChrome';
-import { getFlashcard } from './flashcards';
+import { useDeck } from './useDeck';
 
 export function Scanner() {
   const [permission, requestPermission] = useCameraPermissions();
   const playBeep = useScannerBeep();
   const { scan, handleBarcode, injectScan, reset } = useBarcodeScan(playBeep);
-  const flashcard = scan ? getFlashcard(scan.data) : null;
+  const { lookup } = useDeck();
+  const flashcard = scan ? lookup(scan.data) : null;
 
   // Deep links — bippy://<uuid> from the system camera or a tapped link.
   // Only handle our own scheme so the exp://… URL that launches the app

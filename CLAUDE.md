@@ -55,9 +55,9 @@ Styles are co-located per component — there is no shared `styles.ts`. No routi
 
 ### Flashcard flow
 
-A QR encoding `bippy:<uuidv4>` is looked up in `src/flashcards.ts` and, on hit, takes over the screen with a `Flashcard` component (heavy blur over the live camera, big name, looping video). Unknown UUIDs fall through to the generic `ResultCard`. Cards may omit the `video` field — the UI shows a "Video coming soon!" placeholder so a card can exist before its media is added.
+The deck is **fetched from the admin app**, not hardcoded. `useDeck` (`src/useDeck.ts`) loads it from `${EXPO_PUBLIC_API_URL}/api/public/deck` on launch and on foreground, caches it to disk (`src/flashcards.ts`, `expo-file-system` legacy API) for instant/offline startup, and exposes a synchronous `lookup(scanData)`. A scanned `bippy://<uuid>` (or legacy `bippy:<uuid>`) is parsed by `parseFlashcardId` and looked up in the fetched deck. On hit it takes over the screen with the `Flashcard` component (heavy blur, big name, looping video); a miss falls through to the generic `ResultCard`. Cards may omit `video` — the UI shows a "Video coming soon!" placeholder.
 
-The `video` field accepts either a bundled `require()` (number) or a remote URL (string). Remote URLs are typically public Vercel Blob URLs produced by `scripts/upload-flashcard.js`. Bundled is fine for development; remote is the path forward as the deck grows.
+`video` is always a remote URL string now (public Vercel Blob URL stored in the DB). If `EXPO_PUBLIC_API_URL` is unset the deck is empty and every scan falls through to `ResultCard`. `scripts/upload-flashcard.js` still exists for manual Blob uploads, but cards are normally added via the admin app.
 
 ### Vercel Blob and the secret-token rule
 
@@ -91,7 +91,7 @@ What it is: a browser tool to CRUD the flashcard deck (list/add/edit/delete + vi
 
 1. **Neon Postgres is the source of truth, not the codebase.** Both the deck (`flashcards`) and the allow-list (`admins`) live in Neon (`admin/lib/db.ts`, `@neondatabase/serverless` HTTP driver). The old Blob `deck.json` store was removed. The driver is initialised **lazily** so `next build` / middleware don't need `DATABASE_URL` at import time — keep it that way.
 
-2. **The mobile app is NOT wired to the admin DB yet.** Bippy! still reads `mobile/src/flashcards.ts`; the admin DB is a parallel deck. Don't assume edits in one show up in the other. Wiring path: a public read-only deck endpoint the app fetches (see `admin/README.md`).
+2. **The mobile app reads the live deck** from the public `GET /api/public/deck` route (no auth — allow-listed in `middleware.ts` alongside `/api/auth`). It returns the deck as JSON (names + public video URLs only). The app sets its base URL via `EXPO_PUBLIC_API_URL`. Keep this route unauthenticated and free of secrets.
 
 3. **Auth is the `admins` table, fail-closed.** Google sign-in via Auth.js (NextAuth v5); the `signIn` callback checks `isAdmin()`. An empty table locks everyone out — that's intentional. There is no `ALLOWED_EMAILS` env var anymore. The check runs at sign-in, so a removed admin keeps access until their JWT expires.
 

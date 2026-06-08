@@ -5,7 +5,9 @@ import { auth } from "@/auth";
 export default auth((req) => {
   const { pathname } = req.nextUrl;
   const isPublic =
-    pathname === "/login" || pathname.startsWith("/api/auth");
+    pathname === "/login" ||
+    pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/api/public");
   if (!req.auth && !isPublic) {
     const url = new URL("/login", req.nextUrl.origin);
     return Response.redirect(url);

@@ -65,13 +65,16 @@ with the prod URL, or paste `db/schema.sql` into the Neon SQL editor).
 > Note: an admin removed from the table keeps access until their current session
 > JWT expires; the check runs at sign-in. Fine for this use case.
 
-## Wiring the mobile app to the live deck (optional, later)
+## The public deck endpoint (mobile app)
 
-The mobile app still reads its deck from the hardcoded `src/flashcards.ts`. To
-make this DB the live source of truth, expose a read-only public endpoint (e.g.
-`GET /api/public/deck` returning the deck JSON — unauthenticated) and fetch that
-from the app, keeping the static deck as an offline fallback. Until then, edits
-here live only in the database, not in the app.
+The mobile app reads the live deck from **`GET /api/public/deck`** — an
+unauthenticated, read-only route (allow-listed in `middleware.ts`) that returns
+the deck as JSON: only names + already-public video URLs, no secrets. The app
+caches the response to disk for offline use and refreshes on foreground.
+
+Point the app at this deployment by setting `EXPO_PUBLIC_API_URL` in
+`mobile/.env.local` to the admin's base URL (e.g. `https://your-admin.vercel.app`).
+A newly added/edited card shows up in the app on its next deck refresh.
 
 ## Typecheck
 
