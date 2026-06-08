@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Flashcard } from "@/lib/types";
 import { CardItem } from "./CardItem";
 import { FlashcardModal } from "./FlashcardModal";
@@ -12,6 +12,9 @@ type ModalState =
   | { mode: "edit"; card: Flashcard }
   | null;
 
+type View = "grid" | "list";
+const VIEW_KEY = "bippy-admin-view";
+
 export function AdminApp() {
   const [cards, setCards] = useState<Flashcard[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,6 +23,23 @@ export function AdminApp() {
   const [pendingDelete, setPendingDelete] = useState<Flashcard | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [view, setView] = useState<View>("grid");
+
+  // Restore the saved view after mount (avoids SSR/localStorage mismatch).
+  useEffect(() => {
+    const saved = localStorage.getItem(VIEW_KEY);
+    if (saved === "grid" || saved === "list") setView(saved);
+  }, []);
+  const chooseView = useCallback((v: View) => {
+    setView(v);
+    localStorage.setItem(VIEW_KEY, v);
+  }, []);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return q ? cards.filter((c) => c.name.toLowerCase().includes(q)) : cards;
+  }, [cards, query]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -81,10 +101,38 @@ export function AdminApp() {
   return (
     <>
       <div className="toolbar">
+        <input
+          className="search"
+          type="text"
+          placeholder="Search flashcards…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          aria-label="Search flashcards by name"
+        />
         <span className="count">
-          {loading ? "Loading…" : `${cards.length} flashcard${cards.length === 1 ? "" : "s"}`}
+          {loading
+            ? "Loading…"
+            : query.trim()
+            ? `${filtered.length} of ${cards.length}`
+            : `${cards.length} flashcard${cards.length === 1 ? "" : "s"}`}
         </span>
         <div className="spacer" />
+        <div className="view-toggle" role="group" aria-label="View">
+          <button
+            className={view === "grid" ? "active" : ""}
+            onClick={() => chooseView("grid")}
+            aria-pressed={view === "grid"}
+          >
+            Grid
+          </button>
+          <button
+            className={view === "list" ? "active" : ""}
+            onClick={() => chooseView("list")}
+            aria-pressed={view === "list"}
+          >
+            List
+          </button>
+        </div>
         <button className="btn btn-primary" onClick={() => setModal({ mode: "add" })}>
           + Add flashcard
         </button>
@@ -106,16 +154,42 @@ export function AdminApp() {
         </div>
       )}
 
-      <div className="grid">
-        {cards.map((card) => (
-          <CardItem
-            key={card.id}
-            card={card}
-            onEdit={() => setModal({ mode: "edit", card })}
-            onDelete={() => requestDelete(card)}
-          />
-        ))}
-      </div>
+      {!loading && cards.length > 0 && filtered.length === 0 && (
+        <div className="state">
+          <h2>No matches</h2>
+          <p>
+            Nothing matches “{query.trim()}”.{" "}
+            <a href="#" onClick={(e) => (e.preventDefault(), setQuery(""))}>
+              Clear search
+            </a>
+          </p>
+        </div>
+      )}
+
+      {view === "grid" ? (
+        <div className="grid">
+          {filtered.map((card) => (
+            <CardItem
+              key={card.id}
+              card={card}
+              onEdit={() => setModal({ mode: "edit", card })}
+              onDelete={() => requestDelete(card)}
+            />
+          ))}
+        </div>
+      ) : (
+        <ul className="card-rows">
+          {filtered.map((card) => (
+            <CardItem
+              key={card.id}
+              card={card}
+              variant="row"
+              onEdit={() => setModal({ mode: "edit", card })}
+              onDelete={() => requestDelete(card)}
+            />
+          ))}
+        </ul>
+      )}
 
       {modal && (
         <FlashcardModal
