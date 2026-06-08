@@ -68,6 +68,26 @@ Both the beep (`assets/beep.wav`) and the icon set (`assets/icon.png`, `splash-i
 
 `scripts/make-icons.js` depends on `sharp` (devDependency); it rasterises inline SVG. The icon symbol is sized to stay inside Android's adaptive-icon 66% safe zone, so the sparkle's position is deliberately conservative.
 
+## The admin web app (`admin/`)
+
+`admin/` is a **separate Next.js (App Router) project** — not part of the Expo app and not under the Expo toolchain. It has its own `package.json`, `node_modules`, `tsconfig.json`, and `.env.local`. Treat it as its own world:
+
+- Run commands from inside `admin/`. Its gates are `npm run typecheck` (`tsc --noEmit`) and `npm run build`. There's still no linter/formatter.
+- It uses **plain `npm install`** (it's not an Expo project — the "use `npx expo install`" rule does **not** apply here).
+- `npm run seed` (idempotent) creates the schema from `db/schema.sql`, seeds the first admin, and migrates the original 3 cards. It reads `admin/.env.local` via `node --env-file`.
+
+What it is: a browser tool to CRUD the flashcard deck (list/add/edit/delete + video upload) and manage the admin allow-list. Same warm theme; the icon is ported 1:1 from `scripts/make-icons.js` into `admin/components/BippyIcon.tsx` (and `admin/app/icon.svg`) — if the mobile icon's `COLORS`/shapes change, update those too.
+
+### Non-obvious things about the admin app
+
+1. **Neon Postgres is the source of truth, not the codebase.** Both the deck (`flashcards`) and the allow-list (`admins`) live in Neon (`admin/lib/db.ts`, `@neondatabase/serverless` HTTP driver). The old Blob `deck.json` store was removed. The driver is initialised **lazily** so `next build` / middleware don't need `DATABASE_URL` at import time — keep it that way.
+
+2. **The mobile app is NOT wired to the admin DB yet.** Bippy! still reads `src/flashcards.ts`; the admin DB is a parallel deck. Don't assume edits in one show up in the other. Wiring path: a public read-only deck endpoint the app fetches (see `admin/README.md`).
+
+3. **Auth is the `admins` table, fail-closed.** Google sign-in via Auth.js (NextAuth v5); the `signIn` callback checks `isAdmin()`. An empty table locks everyone out — that's intentional. There is no `ALLOWED_EMAILS` env var anymore. The check runs at sign-in, so a removed admin keeps access until their JWT expires.
+
+4. **Secrets in `admin/.env.local` (gitignored): `DATABASE_URL`, `BLOB_READ_WRITE_TOKEN`, `AUTH_SECRET`, `AUTH_GOOGLE_ID/SECRET`.** The Blob token must stay server-side — video upload uses a short-lived client token minted by `/api/upload`, never the raw token. `@vercel/blob` here is for video file storage only; the deck is in Postgres.
+
 ## SDK version is pinned for a reason
 
 Expo SDK is pinned to **54** because that's what the App Store release of Expo Go supports. The project was originally bootstrapped on SDK 56 and rejected by Expo Go with an "incompatible version" error.

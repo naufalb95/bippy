@@ -96,6 +96,8 @@ scripts/
   make-beep.js                regenerate the beep
   make-icons.js               regenerate the icon set
   upload-flashcard.js         upload a flashcard video to Vercel Blob
+
+admin/                        separate Next.js web app to manage the deck (see admin/README.md)
 ```
 
 ## Adding your own flashcards
@@ -157,6 +159,31 @@ A handful of options: [qrcode-monkey.com](https://www.qrcode-monkey.com/),
 ```sh
 qrencode -o giraffe-qr.png -s 10 "bippy://xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 ```
+
+## Admin web app
+
+`admin/` is a separate **Next.js** web app for managing the flashcard deck from
+a browser — list, add, edit and delete cards, upload their videos, and manage
+who's allowed in. It uses the same warm theme and Bippy! icon.
+
+- **Source of truth:** **Neon Postgres** (`flashcards` + `admins` tables). The
+  admin app does not touch `src/flashcards.ts`.
+- **Auth:** Google sign-in (Auth.js), restricted to the `admins` table.
+- **Videos:** uploaded straight to Vercel Blob; the DB stores their URLs.
+
+```sh
+cd admin
+npm install
+cp .env.example .env.local   # DATABASE_URL, BLOB token, Google OAuth, AUTH_SECRET
+npm run seed                 # create tables + seed first admin & migrate the 3 cards
+npm run dev
+```
+
+> **Heads-up — not yet wired to the mobile app.** Today the app still reads its
+> deck from `src/flashcards.ts`, so cards added/edited in the admin DB don't
+> appear in Bippy! until the app is pointed at the DB (a public read-only deck
+> endpoint). Until then, manage the app's deck via `src/flashcards.ts` (below)
+> and treat the admin app as the future source of truth. See `admin/README.md`.
 
 ## Customising the beep
 
