@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
-import { readDeck, writeDeck, deleteVideoBlob } from "@/lib/store";
-import type { Flashcard } from "@/lib/types";
+import { updateFlashcard, deleteFlashcard } from "@/lib/db";
+import { deleteVideoBlob } from "@/lib/blob";
 
 export const dynamic = "force-dynamic";
 
@@ -13,44 +13,28 @@ export async function PUT(req: Request, { params }: Params) {
   const { id } = await params;
   const body = await req.json().catch(() => null);
 
-  const deck = await readDeck();
-  const idx = deck.findIndex((c) => c.id === id);
-  if (idx === -1) return notFound();
+  const name = typeof body?.name === "string" ? body.name.trim() : "";
+  if (!name) return bad("name is required");
 
-  const current = deck[idx];
-  const next: Flashcard = { ...current };
+  // `video`: a non-empty string sets it; null/"" clears it.
+  let video: string | null = null;
+  const v = body?.video;
+  if (typeof v === "string" && v.trim()) video = v.trim();
 
-  if (typeof body?.name === "string") {
-    const name = body.name.trim();
-    if (!name) return bad("name cannot be empty");
-    next.name = name;
-  }
-  // `video` may be set to a new URL, or explicitly cleared with null/"".
-  if ("video" in (body ?? {})) {
-    const v = body.video;
-    if (v === null || v === "") {
-      delete next.video;
-    } else if (typeof v === "string" && v.trim()) {
-      next.video = v.trim();
-    }
-  }
-
-  deck[idx] = next;
-  await writeDeck(deck);
-  return Response.json(next);
+  const updated = await updateFlashcard(id, { name, video });
+  if (!updated) return notFound();
+  return Response.json(updated);
 }
 
-export async function DELETE(req: Request, { params }: Params) {
+export async function DELETE(_req: Request, { params }: Params) {
   const session = await auth();
   if (!session?.user) return unauthorized();
 
   const { id } = await params;
-  const deck = await readDeck();
-  const card = deck.find((c) => c.id === id);
-  if (!card) return notFound();
+  const deleted = await deleteFlashcard(id);
+  if (!deleted) return notFound();
 
-  await writeDeck(deck.filter((c) => c.id !== id));
-  await deleteVideoBlob(card.video);
+  await deleteVideoBlob(deleted.video);
   return new Response(null, { status: 204 });
 }
 

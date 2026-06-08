@@ -1,14 +1,12 @@
 import { auth } from "@/auth";
-import { readDeck, writeDeck } from "@/lib/store";
-import type { Flashcard } from "@/lib/types";
+import { listFlashcards, createFlashcard, flashcardExists } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   const session = await auth();
   if (!session?.user) return unauthorized();
-  const deck = await readDeck();
-  return Response.json(deck);
+  return Response.json(await listFlashcards());
 }
 
 export async function POST(req: Request) {
@@ -28,11 +26,9 @@ export async function POST(req: Request) {
       ? body.id.trim()
       : crypto.randomUUID();
 
-  const deck = await readDeck();
-  if (deck.some((c) => c.id === id)) return bad("a card with that id already exists");
+  if (await flashcardExists(id)) return bad("a card with that id already exists");
 
-  const card: Flashcard = { id, name, ...(video ? { video } : {}) };
-  await writeDeck([...deck, card]);
+  const card = await createFlashcard({ id, name, video });
   return Response.json(card, { status: 201 });
 }
 
