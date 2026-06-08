@@ -3,7 +3,7 @@
 A pocket-sized barcode & QR scanner that doubles as a flashcard game,
 built in Expo + React Native. The cashier-toy version for my daughter:
 point it at a barcode, hear the satisfying _beep_, see the code. Point
-it at a special `bippy:<uuid>` QR sticker and a full-screen flashcard
+it at a special `bippy://<uuid>` QR sticker and a full-screen flashcard
 takes over with the item's name and a looping video.
 
 ## Try the elephant card
@@ -24,9 +24,9 @@ that UUID up in the deck and shows the Elephant flashcard.
   Codabar, ITF-14, PDF417, Aztec, Data Matrix.
 - **Plays a beep on every scan** — audio mode is configured so it
   plays even on silent (important for a cashier).
-- **Recognises `bippy:<uuidv4>` QR codes** as flashcards. On hit, the
+- **Recognises `bippy://<uuidv4>` QR codes** as flashcards. On hit, the
   whole screen takes over with a portrait video and the item's name.
-  Unknown codes (or non-`bippy:` codes) fall through to a generic
+  Unknown codes (or non-`bippy://` codes) fall through to a generic
   result card with the decoded text.
 - **Same-code debounce** — holding the camera on one barcode doesn't
   re-fire the beep (1.2 s window).
@@ -101,7 +101,7 @@ scripts/
 ## Adding your own flashcards
 
 Each flashcard is a `{ id, name, video? }` entry in `src/flashcards.ts`
-keyed by a UUIDv4. The QR sticker for it encodes `bippy:<that-uuid>`.
+keyed by a UUIDv4. The QR sticker for it encodes `bippy://<that-uuid>`.
 
 **Videos can be either:**
 
@@ -146,16 +146,16 @@ Paste this into FLASHCARDS in src/flashcards.ts:
 ```
 
 Paste the entry into `src/flashcards.ts`, then generate a QR encoding
-`bippy:<that-uuid>` (any QR generator works) and print it as a sticker.
+`bippy://<that-uuid>` (any QR generator works) and print it as a sticker.
 
 ### Generating new QR stickers
 
-Any online QR generator works — encode the string `bippy:<uuid>`.
+Any online QR generator works — encode the string `bippy://<uuid>`.
 A handful of options: [qrcode-monkey.com](https://www.qrcode-monkey.com/),
 [goqr.me](https://goqr.me/), or `qrencode` in a terminal:
 
 ```sh
-qrencode -o giraffe-qr.png -s 10 "bippy:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+qrencode -o giraffe-qr.png -s 10 "bippy://xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 ```
 
 ## Customising the beep
