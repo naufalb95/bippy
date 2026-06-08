@@ -42,6 +42,9 @@ export function AdminApp() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [modal, setModal] = useState<ModalState>(null);
+  const [pendingDelete, setPendingDelete] = useState<Flashcard | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -61,28 +64,33 @@ export function AdminApp() {
     load();
   }, [load]);
 
-  const handleDelete = useCallback(
-    async (card: Flashcard) => {
-      if (
-        !confirm(
-          `Delete "${card.name}"? This removes it from the deck${
-            card.video ? " and deletes its video" : ""
-          }. This can't be undone.`
-        )
-      )
-        return;
-      try {
-        const res = await fetch(`/api/flashcards/${card.id}`, {
-          method: "DELETE",
-        });
-        if (!res.ok && res.status !== 204) throw new Error("Delete failed");
-        setCards((cs) => cs.filter((c) => c.id !== card.id));
-      } catch (e) {
-        alert((e as Error).message);
-      }
-    },
-    []
-  );
+  const requestDelete = useCallback((card: Flashcard) => {
+    setDeleteError(null);
+    setPendingDelete(card);
+  }, []);
+
+  const cancelDelete = useCallback(() => {
+    setPendingDelete(null);
+    setDeleteError(null);
+  }, []);
+
+  const confirmDelete = useCallback(async () => {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const res = await fetch(`/api/flashcards/${pendingDelete.id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok && res.status !== 204) throw new Error("Delete failed");
+      setCards((cs) => cs.filter((c) => c.id !== pendingDelete.id));
+      setPendingDelete(null);
+    } catch (e) {
+      setDeleteError((e as Error).message);
+    } finally {
+      setDeleting(false);
+    }
+  }, [pendingDelete]);
 
   const handleSaved = useCallback((saved: Flashcard) => {
     setCards((cs) => {
@@ -129,7 +137,7 @@ export function AdminApp() {
             key={card.id}
             card={card}
             onEdit={() => setModal({ mode: "edit", card })}
-            onDelete={() => handleDelete(card)}
+            onDelete={() => requestDelete(card)}
           />
         ))}
       </div>
@@ -139,6 +147,21 @@ export function AdminApp() {
           initial={modal.mode === "edit" ? modal.card : null}
           onClose={() => setModal(null)}
           onSaved={handleSaved}
+        />
+      )}
+
+      {pendingDelete && (
+        <ConfirmModal
+          title="Delete flashcard?"
+          message={`This removes “${pendingDelete.name}” from the deck${
+            pendingDelete.video ? " and deletes its video" : ""
+          }. This can't be undone.`}
+          confirmLabel="Delete"
+          busyLabel="Deleting…"
+          busy={deleting}
+          error={deleteError}
+          onConfirm={confirmDelete}
+          onCancel={cancelDelete}
         />
       )}
 
@@ -363,6 +386,44 @@ function QrModal({
             ? "Copy failed"
             : "Copy image"}
         </button>
+      </div>
+    </div>
+  );
+}
+
+function ConfirmModal({
+  title,
+  message,
+  confirmLabel,
+  busyLabel,
+  busy,
+  error,
+  onConfirm,
+  onCancel,
+}: {
+  title: string;
+  message: string;
+  confirmLabel: string;
+  busyLabel: string;
+  busy: boolean;
+  error: string | null;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="overlay" onClick={busy ? undefined : onCancel}>
+      <div className="modal confirm-modal" onClick={(e) => e.stopPropagation()}>
+        <h2>{title}</h2>
+        {error && <div className="error">{error}</div>}
+        <p className="confirm-text">{message}</p>
+        <div className="modal-actions">
+          <button className="btn btn-ghost" onClick={onCancel} disabled={busy}>
+            Cancel
+          </button>
+          <button className="btn btn-danger" onClick={onConfirm} disabled={busy}>
+            {busy ? busyLabel : confirmLabel}
+          </button>
+        </div>
       </div>
     </div>
   );
