@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
 import { BippyIcon } from "@/components/BippyIcon";
-import { AdminApp } from "./AdminApp";
+import { AdminApp } from "@/components/AdminApp";
 
 export default async function Page() {
   const session = await auth();
