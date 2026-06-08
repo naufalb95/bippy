@@ -39,5 +39,19 @@ export function useBarcodeScan(onScanned: () => void) {
     lockedRef.current = false;
   }, []);
 
-  return { scan, handleBarcode, reset };
+  // Inject a scan from outside the camera (e.g. a deep link opened from
+  // the system camera). Bypasses the camera-side same-code debounce but
+  // still respects the lock so a tap-to-dismiss flow stays consistent.
+  const injectScan = useCallback(
+    (data: string) => {
+      if (lockedRef.current) return;
+      lastRef.current = { data, at: Date.now() };
+      lockedRef.current = true;
+      onScanned();
+      setScan({ data, type: 'qr' });
+    },
+    [onScanned],
+  );
+
+  return { scan, handleBarcode, injectScan, reset };
 }

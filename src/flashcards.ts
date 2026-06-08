@@ -1,11 +1,17 @@
 // Flashcard deck. Each card is keyed by a UUIDv4; print/stick a QR
-// encoding `bippy:<uuid>` and Bippy! will pop the matching card on scan.
+// encoding `bippy://<uuid>` and Bippy! will pop the matching card on
+// scan. The `bippy://` URL form is also what makes iOS/Android's
+// system camera offer to open Bippy! directly when scanned outside
+// the app (requires a standalone build — Expo Go uses its own scheme).
+//
+// Legacy `bippy:<uuid>` (no `//`) is still recognised when scanned in
+// the app, so old stickers keep working.
 //
 // Adding a card:
 //   1. Generate a uuid (any uuidv4).
 //   2. Drop the video into `assets/flashcards/videos/<something>.mp4`.
 //   3. Add an entry below with `video: require('...')`.
-//   4. Generate/print a QR encoding `bippy:<uuid>` and stick it on the toy.
+//   4. Generate/print a QR encoding `bippy://<uuid>` and stick it on the toy.
 
 export type Flashcard = {
   id: string;
@@ -36,11 +42,23 @@ export const FLASHCARDS: Record<string, Flashcard> = {
   },
 };
 
-const QR_PREFIX = 'bippy:';
-
+/**
+ * Extract a flashcard from a scanned/linked payload.
+ *
+ * Accepts:
+ *   bippy://<uuid>    — preferred; works as a URL deep link
+ *   bippy:<uuid>      — legacy; in-app scans only
+ *
+ * Returns null for anything else, leaving the generic result card to
+ * handle non-flashcard codes.
+ */
 export function getFlashcard(data: string): Flashcard | null {
-  const trimmed = data.trim();
-  if (!trimmed.toLowerCase().startsWith(QR_PREFIX)) return null;
-  const id = trimmed.slice(QR_PREFIX.length).trim().toLowerCase();
+  const trimmed = data.trim().toLowerCase();
+  let rest: string | null = null;
+  if (trimmed.startsWith('bippy://')) rest = trimmed.slice('bippy://'.length);
+  else if (trimmed.startsWith('bippy:')) rest = trimmed.slice('bippy:'.length);
+  if (rest === null) return null;
+  // Tolerate trailing slashes, query strings, paths.
+  const id = rest.split(/[/?#]/)[0].trim();
   return FLASHCARDS[id] ?? null;
 }

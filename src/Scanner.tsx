@@ -1,7 +1,9 @@
+import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as Linking from 'expo-linking';
 
 import { BARCODE_TYPES } from './constants';
 import { useScannerBeep } from './hooks/useScannerBeep';
@@ -15,8 +17,19 @@ import { getFlashcard } from './flashcards';
 export function Scanner() {
   const [permission, requestPermission] = useCameraPermissions();
   const playBeep = useScannerBeep();
-  const { scan, handleBarcode, reset } = useBarcodeScan(playBeep);
+  const { scan, handleBarcode, injectScan, reset } = useBarcodeScan(playBeep);
   const flashcard = scan ? getFlashcard(scan.data) : null;
+
+  // Deep links — bippy://<uuid> from the system camera or a tapped link.
+  useEffect(() => {
+    Linking.getInitialURL().then((url) => {
+      if (url) injectScan(url);
+    });
+    const sub = Linking.addEventListener('url', ({ url }) => {
+      injectScan(url);
+    });
+    return () => sub.remove();
+  }, [injectScan]);
 
   if (!permission) return <View style={styles.root} />;
   if (!permission.granted) {

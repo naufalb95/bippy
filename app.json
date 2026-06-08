@@ -3,6 +3,7 @@
     "name": "Bippy!",
     "slug": "bippy",
     "version": "1.0.0",
+    "scheme": "bippy",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
