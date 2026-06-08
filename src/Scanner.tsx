@@ -21,13 +21,15 @@ export function Scanner() {
   const flashcard = scan ? getFlashcard(scan.data) : null;
 
   // Deep links — bippy://<uuid> from the system camera or a tapped link.
+  // Only handle our own scheme so the exp://… URL that launches the app
+  // in Expo Go doesn't pop a bogus result card. Unknown bippy:// UUIDs
+  // still fall through to ResultCard (same as an in-app scan).
   useEffect(() => {
-    Linking.getInitialURL().then((url) => {
-      if (url) injectScan(url);
-    });
-    const sub = Linking.addEventListener('url', ({ url }) => {
-      injectScan(url);
-    });
+    const open = (url: string | null) => {
+      if (url && url.trim().toLowerCase().startsWith('bippy:')) injectScan(url);
+    };
+    Linking.getInitialURL().then(open);
+    const sub = Linking.addEventListener('url', ({ url }) => open(url));
     return () => sub.remove();
   }, [injectScan]);
 
