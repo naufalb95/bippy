@@ -2,7 +2,16 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Repository structure
+
+The root holds only docs (`README.md`, `CLAUDE.md`) and two self-contained app folders, each with its own `package.json`, `node_modules`, and `.env.local` — there is no root-level package or toolchain:
+
+- **`mobile/`** — the Expo + React Native app (the Bippy! scanner). Everything in this doc up to "The admin web app" is about `mobile/`, and those commands run from inside `mobile/`.
+- **`admin/`** — a separate Next.js web app to manage the deck (see its own section below).
+
 ## Commands
+
+`mobile/` commands — run from inside `mobile/`:
 
 ```sh
 npm start                       # Metro + Expo dev server (test on physical iPhone via Expo Go)
@@ -16,7 +25,7 @@ There is **no test suite, no linter, no formatter** configured. Don't invent com
 
 ## Architecture
 
-Single-screen Expo app. `App.tsx` is a thin `SafeAreaProvider` wrapper; everything else lives under `src/`:
+Single-screen Expo app under `mobile/`. `App.tsx` is a thin `SafeAreaProvider` wrapper; everything else lives under `mobile/src/`. The tree below (and the `src/` / `scripts/` / `assets/` paths in the rest of this section) is relative to `mobile/`:
 
 ```
 App.tsx                       SafeAreaProvider + <Scanner />
@@ -76,13 +85,13 @@ Both the beep (`assets/beep.wav`) and the icon set (`assets/icon.png`, `splash-i
 - It uses **plain `npm install`** (it's not an Expo project — the "use `npx expo install`" rule does **not** apply here).
 - `npm run seed` (idempotent) creates the schema from `db/schema.sql`, seeds the first admin, and migrates the original 3 cards. It reads `admin/.env.local` via `node --env-file`.
 
-What it is: a browser tool to CRUD the flashcard deck (list/add/edit/delete + video upload) and manage the admin allow-list. Same warm theme; the icon is ported 1:1 from `scripts/make-icons.js` into `admin/components/BippyIcon.tsx` (and `admin/app/icon.svg`) — if the mobile icon's `COLORS`/shapes change, update those too.
+What it is: a browser tool to CRUD the flashcard deck (list/add/edit/delete + video upload) and manage the admin allow-list. Same warm theme; the icon is ported 1:1 from `mobile/scripts/make-icons.js` into `admin/components/BippyIcon.tsx` (and `admin/app/icon.svg`) — if the mobile icon's `COLORS`/shapes change, update those too.
 
 ### Non-obvious things about the admin app
 
 1. **Neon Postgres is the source of truth, not the codebase.** Both the deck (`flashcards`) and the allow-list (`admins`) live in Neon (`admin/lib/db.ts`, `@neondatabase/serverless` HTTP driver). The old Blob `deck.json` store was removed. The driver is initialised **lazily** so `next build` / middleware don't need `DATABASE_URL` at import time — keep it that way.
 
-2. **The mobile app is NOT wired to the admin DB yet.** Bippy! still reads `src/flashcards.ts`; the admin DB is a parallel deck. Don't assume edits in one show up in the other. Wiring path: a public read-only deck endpoint the app fetches (see `admin/README.md`).
+2. **The mobile app is NOT wired to the admin DB yet.** Bippy! still reads `mobile/src/flashcards.ts`; the admin DB is a parallel deck. Don't assume edits in one show up in the other. Wiring path: a public read-only deck endpoint the app fetches (see `admin/README.md`).
 
 3. **Auth is the `admins` table, fail-closed.** Google sign-in via Auth.js (NextAuth v5); the `signIn` callback checks `isAdmin()`. An empty table locks everyone out — that's intentional. There is no `ALLOWED_EMAILS` env var anymore. The check runs at sign-in, so a removed admin keeps access until their JWT expires.
 

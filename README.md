@@ -12,7 +12,7 @@ The repo includes a sample QR — display it on another screen and scan
 it with the app to see the flashcard flow without printing anything:
 
 <p align="center">
-  <img src="assets/sample-elephant-qr.png" alt="Sample elephant QR" width="240" />
+  <img src="mobile/assets/sample-elephant-qr.png" alt="Sample elephant QR" width="240" />
 </p>
 
 It encodes `bippy://12812dd3-a9a2-4c93-97da-cc8cca0e8cd1` — Bippy! looks
@@ -50,8 +50,9 @@ before bumping.
 
 1. Install **Expo Go** from the App Store.
 2. Make sure your Mac and iPhone are on the same Wi-Fi.
-3. From this folder:
+3. From the `mobile/` folder:
    ```sh
+   cd mobile
    npm install
    npm start
    ```
@@ -65,44 +66,45 @@ If Wi-Fi discovery is flaky, press `s` in the Expo CLI to switch to
 
 ## Project layout
 
+The repo root holds only docs and two app folders: `mobile/` (this README's
+subject) and `admin/` (the web deck manager).
+
 ```
-App.tsx                       SafeAreaProvider + <Scanner />
-index.ts                      Expo root-component entry
-app.json                      Expo config: "Bippy!", permissions, plugins
+mobile/                         the Expo app
+  App.tsx                       SafeAreaProvider + <Scanner />
+  index.ts                      Expo root-component entry
+  app.json                      Expo config: "Bippy!", permissions, plugins
+  src/
+    Scanner.tsx                 composes hooks + components, owns layering
+    constants.ts                BARCODE_TYPES + timing constants
+    theme.ts                    color palette (light brown / warm cream)
+    flashcards.ts               typed deck keyed by UUID + getFlashcard()
+    hooks/
+      useScannerBeep.ts         audio player + silent-mode setup
+      useBarcodeScan.ts         scan state, lock ref, same-code debounce
+    components/
+      Flashcard.tsx             full-screen card with looping portrait video
+      ResultCard.tsx            generic post-scan card for unrecognised codes
+      PermissionGate.tsx        "Allow camera" screen
+      ScannerChrome.tsx         header / reticle / footer (over camera)
+  assets/
+    beep.wav                    generated scanner beep
+    sample-elephant-qr.png      sample QR encoding the Elephant flashcard
+    flashcards/videos/          bundled flashcard videos (optional; can be remote URLs)
+    icon.png / splash-icon.png  app icon + splash
+    favicon.png                 web favicon
+    android-icon-*.png          Android adaptive + monochrome icon
+  scripts/
+    make-beep.js                regenerate the beep
+    make-icons.js               regenerate the icon set
+    upload-flashcard.js         upload a flashcard video to Vercel Blob
 
-src/
-  Scanner.tsx                 composes hooks + components, owns layering
-  constants.ts                BARCODE_TYPES + timing constants
-  theme.ts                    color palette (light brown / warm cream)
-  flashcards.ts               typed deck keyed by UUID + getFlashcard()
-  hooks/
-    useScannerBeep.ts         audio player + silent-mode setup
-    useBarcodeScan.ts         scan state, lock ref, same-code debounce
-  components/
-    Flashcard.tsx             full-screen card with looping portrait video
-    ResultCard.tsx            generic post-scan card for unrecognised codes
-    PermissionGate.tsx        "Allow camera" screen
-    ScannerChrome.tsx         header / reticle / footer (over camera)
-
-assets/
-  beep.wav                    generated scanner beep
-  sample-elephant-qr.png      sample QR encoding the Elephant flashcard
-  flashcards/videos/          bundled flashcard videos (optional; can be remote URLs)
-  icon.png / splash-icon.png  app icon + splash
-  favicon.png                 web favicon
-  android-icon-*.png          Android adaptive + monochrome icon
-
-scripts/
-  make-beep.js                regenerate the beep
-  make-icons.js               regenerate the icon set
-  upload-flashcard.js         upload a flashcard video to Vercel Blob
-
-admin/                        separate Next.js web app to manage the deck (see admin/README.md)
+admin/                          separate Next.js web app to manage the deck (see admin/README.md)
 ```
 
 ## Adding your own flashcards
 
-Each flashcard is a `{ id, name, video? }` entry in `src/flashcards.ts`
+Each flashcard is a `{ id, name, video? }` entry in `mobile/src/flashcards.ts`
 keyed by a UUIDv4. The QR sticker for it encodes `bippy://<that-uuid>`.
 
 **Videos can be either:**
@@ -118,7 +120,7 @@ For remote videos, there's a script that handles upload + prints the
 ready-to-paste entry. One-time setup:
 
 1. Create a Vercel Blob store on the Vercel dashboard.
-2. Copy the read-write token into `.env.local`:
+2. Copy the read-write token into `mobile/.env.local`:
    ```
    BLOB_READ_WRITE_TOKEN=vercel_blob_rw_XXXXXX_YYYYYY
    ```
@@ -126,7 +128,7 @@ ready-to-paste entry. One-time setup:
    machine; the upload script (run from your laptop) uses it. The app
    itself never sees the token — only the public URL it returns.
 
-Then:
+Then, from `mobile/`:
 
 ```sh
 npm run upload-flashcard ./giraffe.mp4 --name "Giraffe"
@@ -147,7 +149,7 @@ Paste this into FLASHCARDS in src/flashcards.ts:
   },
 ```
 
-Paste the entry into `src/flashcards.ts`, then generate a QR encoding
+Paste the entry into `mobile/src/flashcards.ts`, then generate a QR encoding
 `bippy://<that-uuid>` (any QR generator works) and print it as a sticker.
 
 ### Generating new QR stickers
@@ -167,7 +169,7 @@ a browser — list, add, edit and delete cards, upload their videos, and manage
 who's allowed in. It uses the same warm theme and Bippy! icon.
 
 - **Source of truth:** **Neon Postgres** (`flashcards` + `admins` tables). The
-  admin app does not touch `src/flashcards.ts`.
+  admin app does not touch `mobile/src/flashcards.ts`.
 - **Auth:** Google sign-in (Auth.js), restricted to the `admins` table.
 - **Videos:** uploaded straight to Vercel Blob; the DB stores their URLs.
 
@@ -180,26 +182,27 @@ npm run dev
 ```
 
 > **Heads-up — not yet wired to the mobile app.** Today the app still reads its
-> deck from `src/flashcards.ts`, so cards added/edited in the admin DB don't
-> appear in Bippy! until the app is pointed at the DB (a public read-only deck
-> endpoint). Until then, manage the app's deck via `src/flashcards.ts` (below)
-> and treat the admin app as the future source of truth. See `admin/README.md`.
+> deck from `mobile/src/flashcards.ts`, so cards added/edited in the admin DB
+> don't appear in Bippy! until the app is pointed at the DB (a public read-only
+> deck endpoint). Until then, manage the app's deck via `mobile/src/flashcards.ts`
+> (below) and treat the admin app as the future source of truth. See
+> `admin/README.md`.
 
 ## Customising the beep
 
 Edit `freq`, `durationSec`, or `amplitude` at the top of
-`scripts/make-beep.js` and run:
+`mobile/scripts/make-beep.js` and run, from `mobile/`:
 
 ```sh
 node scripts/make-beep.js
 ```
 
-It writes `assets/beep.wav`. Reload Expo Go to pick it up.
+It writes `mobile/assets/beep.wav`. Reload Expo Go to pick it up.
 
 ## Customising the icon
 
-Edit the `COLORS` palette or shapes at the top of `scripts/make-icons.js`
-and run:
+Edit the `COLORS` palette or shapes at the top of `mobile/scripts/make-icons.js`
+and run, from `mobile/`:
 
 ```sh
 node scripts/make-icons.js
