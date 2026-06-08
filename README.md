@@ -12,7 +12,7 @@ The repo includes a sample QR — display it on another screen and scan
 it with the app to see the flashcard flow without printing anything:
 
 <p align="center">
-  <img src="mobile/assets/sample-elephant-qr.png" alt="Sample elephant QR" width="240" />
+  <img src="sample-elephant-qr.png" alt="Sample elephant QR" width="240" />
 </p>
 
 It encodes `bippy://12812dd3-a9a2-4c93-97da-cc8cca0e8cd1` — Bippy! looks
