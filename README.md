@@ -1,4 +1,4 @@
-# Bippy!
+# Bippy
 
 A pocket-sized barcode & QR scanner that doubles as a flashcard game,
 built in Expo + React Native. The cashier-toy version for my daughter:
@@ -11,9 +11,7 @@ takes over with the item's name and a looping video.
 The repo includes a sample QR — display it on another screen and scan
 it with the app to see the flashcard flow without printing anything:
 
-<p align="center">
-  <img src="sample-elephant-qr.png" alt="Sample elephant QR" width="240" />
-</p>
+![Sample elephant QR](sample-elephant-qr.png)
 
 It encodes `bippy://12812dd3-a9a2-4c93-97da-cc8cca0e8cd1` — Bippy! looks
 that UUID up in the deck and shows the Elephant flashcard.
@@ -51,11 +49,13 @@ before bumping.
 1. Install **Expo Go** from the App Store.
 2. Make sure your Mac and iPhone are on the same Wi-Fi.
 3. From the `mobile/` folder:
+
    ```sh
    cd mobile
    npm install
    npm start
    ```
+
 4. Scan the Expo QR in the terminal with the iPhone Camera app, tap
    the banner to open in Expo Go.
 5. Approve camera permission on first launch.
@@ -69,7 +69,7 @@ If Wi-Fi discovery is flaky, press `s` in the Expo CLI to switch to
 The repo root holds only docs and two app folders: `mobile/` (this README's
 subject) and `admin/` (the web deck manager).
 
-```
+```directory
 mobile/                         the Expo app
   App.tsx                       SafeAreaProvider + <Scanner />
   index.ts                      Expo root-component entry
@@ -111,7 +111,7 @@ card's UUID for you.
 
 Point the app at your deck by setting the admin's URL in `mobile/.env.local`:
 
-```
+```ini
 EXPO_PUBLIC_API_URL=https://your-admin.vercel.app
 ```
 
