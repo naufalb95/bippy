@@ -350,11 +350,20 @@ a {
   border-radius: 12px;
   padding: 14px;
   background: #fffef9;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.video-picker.dragging {
+  border-color: var(--brand);
+  background: #fbf2e2;
 }
 .video-picker .row {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+.drop-hint {
+  font-size: 13px;
+  color: var(--text-soft);
 }
 .video-picker .preview {
   margin-top: 12px;

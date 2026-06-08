@@ -10,6 +10,33 @@ type ModalState =
   | { mode: "edit"; card: Flashcard }
   | null;
 
+// Must match the server's allowedContentTypes in /api/upload.
+const ALLOWED_VIDEO_TYPES = [
+  "video/mp4",
+  "video/quicktime",
+  "video/x-m4v",
+  "video/webm",
+];
+const ALLOWED_VIDEO_EXTS = [".mp4", ".mov", ".m4v", ".webm"];
+const VIDEO_FORMATS_LABEL = "MP4, MOV, M4V or WebM";
+
+// Returns an error message if the file isn't an accepted video, else null.
+function videoFileError(file: File): string | null {
+  const type = file.type.toLowerCase();
+  if (type) {
+    if (!type.startsWith("video/"))
+      return `That's not a video file. Use ${VIDEO_FORMATS_LABEL}.`;
+    if (!ALLOWED_VIDEO_TYPES.includes(type))
+      return `Unsupported video format. Use ${VIDEO_FORMATS_LABEL}.`;
+    return null;
+  }
+  // Some drops/files report no MIME type — fall back to the extension.
+  const name = file.name.toLowerCase();
+  return ALLOWED_VIDEO_EXTS.some((e) => name.endsWith(e))
+    ? null
+    : `Unsupported video format. Use ${VIDEO_FORMATS_LABEL}.`;
+}
+
 export function AdminApp() {
   const [cards, setCards] = useState<Flashcard[]>([]);
   const [loading, setLoading] = useState(true);
@@ -357,11 +384,15 @@ function FlashcardModal({
   const [progress, setProgress] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  async function uploadFile(file: File) {
+    const invalid = videoFileError(file);
+    if (invalid) {
+      setError(invalid);
+      return;
+    }
     setError(null);
     setUploading(true);
     setProgress(0);
@@ -379,6 +410,31 @@ function FlashcardModal({
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
     }
+  }
+
+  function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) uploadFile(file);
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    if (uploading) return;
+    e.dataTransfer.dropEffect = "copy";
+    setDragging(true);
+  }
+  function handleDragLeave(e: React.DragEvent) {
+    e.preventDefault();
+    // Ignore leave events fired when crossing into a child element.
+    if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+    setDragging(false);
+  }
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragging(false);
+    if (uploading) return;
+    const file = e.dataTransfer.files?.[0];
+    if (file) uploadFile(file);
   }
 
   async function handleSave() {
@@ -439,7 +495,12 @@ function FlashcardModal({
 
         <div className="field">
           <label>Video</label>
-          <div className="video-picker">
+          <div
+            className={`video-picker${dragging ? " dragging" : ""}`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
             <div className="row">
               <button
                 type="button"
@@ -447,9 +508,9 @@ function FlashcardModal({
                 onClick={() => fileRef.current?.click()}
                 disabled={uploading}
               >
-                {uploading ? `Uploading… ${progress}%` : video ? "Replace video" : "Upload video"}
+                {uploading ? `Uploading… ${progress}%` : video ? "Replace video" : "Choose video"}
               </button>
-              {video && !uploading && (
+              {video && !uploading ? (
                 <button
                   type="button"
                   className="btn btn-danger btn-sm"
@@ -457,6 +518,8 @@ function FlashcardModal({
                 >
                   Remove
                 </button>
+              ) : (
+                !uploading && <span className="drop-hint">or drag &amp; drop</span>
               )}
             </div>
             <input
@@ -478,7 +541,8 @@ function FlashcardModal({
             )}
             {!video && !uploading && (
               <p className="hint" style={{ marginTop: 10 }}>
-                Optional — the app shows “Video coming soon!” until one is added.
+                {VIDEO_FORMATS_LABEL}. Optional — the app shows “Video coming
+                soon!” until one is added.
               </p>
             )}
           </div>
